@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>留言板</title>
+  <link rel="stylesheet" href="./assets/bootstrap.css">
+  <script src="./assets/jquery.js"></script>
+  <script src="./assets/layer.js"></script>
+ 
+</head>
+
+<body>
+  <div class="container">
+    <h1 class="display-1">留言板</h1>
+    <hr>
+    <ul id="messages" class="list-unstyled">
+      {{each arr}}
+      <li class="media">
+        <img class="mr-3" src="./myup/{{$value.photo}}" width="128" height="128"> 
+        <div class="media-body">
+          <h4>{{$value.name}}</h4>
+          <p>{{$value.content}}</p>
+          <p>{{$value.time|mytime}}</p>
+        </div>
+      </li>
+      {{/each}}
+    </ul>
+    <hr>
+    {{if !brr}}
+    <div>
+      <p>点击<a id="show_box" href="javascript:;">登录</a>，发表你的留言吧~</p>
+    </div>
+    {{else}}
+    <form>
+      <!-- <div class="form-group">
+        <label for="txt_name">称呼：</label>
+        <input class="form-control" id="txt_name" type="text">
+      </div> -->
+      <div class="form-group">
+        <label for="txt_content">留言：</label>
+        <textarea class="form-control" id="txt_content" cols="80" rows="10"></textarea>
+      </div>
+      <button type="button" id="btn_send" class="btn btn-primary">提交</button>
+    </form>
+    {{/if}}
+  </div>
+
+  <script>
+    let cont = `
+    <form style="margin:20px 0 0 60px">
+        <div class="form-group">
+          <label for="user" stype="display:inline;">账户：</label>
+          <input name="username" type="text" class="form-control" id="user" style="display:inline;width:200px;" autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label for="password" style="display:inline;">密码：</label>
+          <input name="password" type="text" class="form-control" id="password" style="display:inline;width:200px;"
+            autocomplete="off" />
+        </div>
+        <button id="login" type="button" class="btn btn-primary" style="margin-left: 80px;">登录</button>
+        <span>还没账号，马上<a href="/zc.html">注册</a></span>
+      </form>
+    `;
+    var index;
+    $('#show_box').click(function () {
+      //页面层
+      index = layer.open({
+        type: 1,
+        title: '登录',
+        skin: 'layui-layer-rim', //加上边框
+        area: ['420px', '280px'], //宽高
+        content: cont
+      });
+    });
+  </script>
+  <script>
+    // 点击弹出框登录按钮，获取内容，提交到服务器,事件委托
+    $('body').on('click', '#login', function () {
+      let username = $('#user').val();
+      let pwd = $('#password').val()
+      $.ajax({
+        type:'POST',
+        url: '/check',
+        data: {
+          username: username,
+          password: pwd
+        },
+        success:function(res) {
+          // console.log(res);
+          if(res=="登录成功") {
+            layer.close(index);
+            location.reload()
+          }else if(res=='登录失败') {
+            layer.msg('登录失败');
+          }
+        }
+      })
+    })
+  </script>
+
+  <script>
+    // 点击按钮添加留言
+    // 使用ajax添加留言，因为添加留言后不需要刷新页面，所以使用ajax
+    $('#btn_send').click(function () {
+      // alert('111')
+      let name = $('#txt_name').val();
+      let content = $('#txt_content').val();
+      $.ajax({
+        type: 'POST',
+        url: '/addMsg',
+        data: {
+          name: name,
+          content: content
+        },
+        success: function (res) {
+          console.log(res);
+          if (res) {
+            console.log(res);
+            //如果添加成功，那么拼接一个新的li追加到ul中
+            let str = `
+          <li class="media">
+        <img class="mr-3" src='./myup/${res.photo}' width="128" height="128">
+        <div class="media-body">
+          <h4>${res.name}</h4>
+          <p>${res.content}</p>
+          <p>${res.time}</p>
+        </div>
+      </li>
+          `
+            $('#messages').append(str);
+            $('#txt_name').val('');
+            $('#txt_content').val('');
+            // location.reload()
+          } else if (res == 'fail') {
+            alert('添加失败');
+          }
+        }
+      })
+    })
+  </script>
+
+
+</body>
+
+</html>
